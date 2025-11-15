@@ -16,21 +16,24 @@ const PORT = process.env.PORT || 3000;
 const TRELLO_BOARD_ID = process.env.TRELLO_BOARD_ID; 
 
 // Middleware
-app.use(cors()); 
+// FIX: Aapka local frontend (http://localhost:5173) aur Vercel dono access kar saken isliye wildcard (*) use kiya gaya hai.
+app.use(cors({ 
+    origin: '*', 
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD']
+})); 
 app.use(express.json()); 
 
 // --- 1. WebSocket Server Setup ---
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        // FIX: origin ko wildcard (*) set kiya gaya hai Vercel par stability ke liye.
+        // CORS (Cross-Origin Resource Sharing) ko * set kiya gaya hai sabhi domains ke liye.
         origin: "*", 
         methods: ["GET", "POST"],
-        // credentials: true // Credentials allow karein
     },
-    // Vercel par Socket.io ko stable banane ke liye transports ko polling par set karein.
-    // NOTE: Agar client-side par 'polling' set hai, toh yeh zaroori nahi, lekin better hai.
-    // transports: ['polling'] 
+    // FIX: Vercel par stability ke liye aur client-side se match karne ke liye 
+    // sirf HTTP Long-Polling (polling) transport use karein.
+    transports: ['polling'] 
 });
 
 io.on('connection', (socket) => {
@@ -48,7 +51,6 @@ io.on('connection', (socket) => {
 // -----------------------------------
 
 // --- 2. Required Backend API Endpoints (30 points) ---
-// ... (API Endpoints code mein koi change nahi) ...
 
 app.post('/api/boards', async (req, res) => {
     try {
@@ -92,7 +94,6 @@ app.delete('/api/tasks/:cardId', async (req, res) => {
 });
 
 // --- 3. Trello Webhook Listener (Real-time Core - 30 points) ---
-// ... (Webhook code mein koi change nahi) ...
 
 app.head('/api/webhook/trello', (req, res) => {
     console.log('Trello Webhook HEAD received for validation.');
